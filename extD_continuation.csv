@@ -1,0 +1,7 @@
+optimiser,scheme,mean_c,sd_c,mean_gray,sd_gray
+OC,fixed,291.599,0.076,0.282,0.004
+OC,continuation,291.548,0.439,0.279,0.001
+GD,fixed,442.407,4.670,0.504,0.008
+GD,continuation,603.299,1.863,0.699,0.002
+MMA,fixed,286.053,2.104,0.278,0.005
+MMA,continuation,288.539,0.383,0.283,0.000
