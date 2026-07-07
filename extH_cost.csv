@@ -1,0 +1,4 @@
+optimiser,total_time_s,ms_per_solve,mean_conv_iter,mean_compliance
+OC,3.929,43.66,58.5,206.28
+GD,3.750,41.66,82.3,303.56
+MMA,4.220,46.89,68.5,203.15
