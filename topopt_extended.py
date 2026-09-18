@@ -66,35 +66,35 @@ CONFIG_EXT = {
     "base_benchmark": "mbb",
     "base_nelx": 100, "base_nely": 40,
     "base_volfrac": 0.4, "base_penal": 3.0, "base_rmin": 2.0,
-    "base_seeds": [0, 1, 2, 3, 4, 5],          # raise to 20+ for the paper
+    "base_seeds": list(range(20)),          # fuller rerun: 20 seeds
 
     # A. mesh-independence
     "mesh_list": [(60, 20), (90, 30), (120, 40), (150, 50)],  # add (180,60) etc.
-    "mesh_seeds": [0, 1, 2],
+    "mesh_seeds": list(range(8)),
     "mesh_ref_nelx": 120,        # filter radius is scaled to keep it physically constant
 
     # B. filter radius
     "rmin_list": [1.2, 1.5, 2.0, 2.5, 3.0, 4.0],
-    "rmin_seeds": [0, 1, 2],
+    "rmin_seeds": list(range(8)),
 
     # C. volume fraction
     "volfrac_list": [0.2, 0.3, 0.4, 0.5, 0.6],
-    "volfrac_seeds": [0, 1, 2],
+    "volfrac_seeds": list(range(8)),
 
     # D. penalisation continuation
-    "continuation_seeds": [0, 1, 2, 3],
+    "continuation_seeds": list(range(8)),
     "penal_final": 3.0,
     "penal_steps": 40,           # iterations over which penal ramps 1 -> penal_final
 
     # E. hyperparameter sensitivity
     "gd_lr_list": [0.1, 0.2, 0.5, 1.0, 2.0, 4.0],
     "mma_move_list": [0.05, 0.1, 0.2, 0.3, 0.5],
-    "hyper_seeds": [0, 1, 2],
+    "hyper_seeds": list(range(8)),
 
     # F. multi-benchmark
     "benchmarks": ["mbb", "cantilever", "bridge", "tip_cantilever"],
     "bench_nelx": 100, "bench_nely": 40,
-    "bench_seeds": [0, 1, 2, 3],
+    "bench_seeds": list(range(8)),
 
     # optimiser hyperparameters used everywhere unless overridden
     "optimisers": {"OC": {}, "GD": {"lr": 0.5}, "MMA": {}},
@@ -111,6 +111,7 @@ def apply_bc(prob, bc):
     """Overwrite prob.f and prob.free for a benchmark not built natively by
     TopOptProblem. Node (i, j) has index (nely+1)*i + j, with j=0 at the top;
     x-dof = 2*node, y-dof = 2*node + 1."""
+    prob.bc = bc  # ensure the benchmark identity is recorded (fixes cache key collision)
     nelx, nely, ndof = prob.nelx, prob.nely, prob.ndof
     f = np.zeros((ndof, 1))
     dofs = np.arange(ndof)
@@ -777,20 +778,25 @@ def main():
     print(" Output directory:", cfg["outdir"])
     print("=" * 70)
 
-    if studies["A_mesh"]:
-        print("\n[A] Mesh independence ...");           study_mesh_independence(cfg)
-    if studies["B_filter"]:
-        print("\n[B] Filter radius ...");                study_filter_radius(cfg)
-    if studies["C_volfrac"]:
-        print("\n[C] Volume fraction ...");              study_volume_fraction(cfg)
-    if studies["D_continuation"]:
-        print("\n[D] Penalisation continuation ...");    study_penal_continuation(cfg)
-    if studies["E_hyperparameter"]:
-        print("\n[E] Hyperparameter sensitivity ...");   study_hyperparameter(cfg)
-    if studies["F_multibenchmark"]:
-        print("\n[F] Multi-benchmark ...");              study_multibenchmark(cfg)
-    if studies["GH_stats_cost"]:
-        print("\n[G+H] Statistics and cost ...");        study_statistics_and_cost(cfg)
+    out = cfg["outdir"]
+    def done(fname):
+        import os
+        return os.path.exists(os.path.join(out, fname))
+
+    if studies["A_mesh"] and not done("extA_mesh.csv"):
+        print("\n[A] Mesh independence ...", flush=True);           study_mesh_independence(cfg)
+    if studies["B_filter"] and not done("extB_filter.csv"):
+        print("\n[B] Filter radius ...", flush=True);                study_filter_radius(cfg)
+    if studies["C_volfrac"] and not done("extC_volfrac.csv"):
+        print("\n[C] Volume fraction ...", flush=True);              study_volume_fraction(cfg)
+    if studies["D_continuation"] and not done("extD_continuation.csv"):
+        print("\n[D] Penalisation continuation ...", flush=True);    study_penal_continuation(cfg)
+    if studies["E_hyperparameter"] and not done("extE_gd_lr.csv"):
+        print("\n[E] Hyperparameter sensitivity ...", flush=True);   study_hyperparameter(cfg)
+    if studies["F_multibenchmark"] and not done("extF_multibenchmark.csv"):
+        print("\n[F] Multi-benchmark ...", flush=True);              study_multibenchmark(cfg)
+    if studies["GH_stats_cost"] and not done("extH_cost.csv"):
+        print("\n[G+H] Statistics and cost ...", flush=True);        study_statistics_and_cost(cfg)
 
     print("\nAll requested studies complete. Charts, CSVs and LaTeX tables are "
           "in ./" + cfg["outdir"] + "/")

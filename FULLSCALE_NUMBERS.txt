@@ -1,0 +1,49 @@
+FULL-SCALE RERUN RESULTS (iteration horizon = 160)
+====================================================
+
+ITERATION HORIZON: 160 (fixed, all runs) -> Table 8 "[FILL]" becomes 160
+
+BASE COMPARISON (20 seeds, half MBB beam, vf=0.4, 100x40, penal=3, rmin=2):
+  OC : 171.33 +/- 0.92   range 169.6-173.1
+  MMA: 169.36 +/- 1.92   range 167.0-172.4
+  GD : 244.34 +/- 6.73   range 234.7-259.7
+  GD is ~43% worse than OC; GD spread ~2.8% vs OC ~0.5%, MMA ~1.1%
+
+STATISTICS (20 seeds, pairwise):
+  OC vs GD : p<0.0001, Cliff delta = -1.00 (fully disjoint)
+  GD vs MMA: p<0.0001, Cliff delta = +1.00 (fully disjoint)
+  OC vs MMA: p=0.0028,  Cliff delta = +0.56 (MMA better, now SIGNIFICANT)
+  NOTE: at 20 seeds OC vs MMA IS significant (was not at 6 seeds).
+        Update text: no longer "statistically indistinguishable"; instead
+        "small but statistically significant advantage for MMA".
+
+COST (per-iteration):
+  OC : 67.5 iters to converge, cheapest per solve
+  GD : 98.0 iters, 29.1 ms/solve
+  MMA: 69.7 iters, 43.9 ms/solve
+  Differences are in solution quality, not raw speed.
+
+MESH INDEPENDENCE (6 seeds): ranking stable across 60x20..150x50
+  e.g. 150x50: OC 264.1, MMA 261.8, GD 382.7 (GD ~45% worse throughout)
+
+FILTER RADIUS (6 seeds): compliance & grayness rise with rmin; GD worst always
+  rmin 1.2: OC 162.2, MMA 162.2, GD 229.8
+  rmin 4.0: OC 198.5, MMA 197.8, GD 301.2
+
+VOLUME FRACTION (6 seeds): compliance falls as vf rises; ranking preserved
+  EXCEPT vf=0.2 where MMA (525.2) > OC (442.8) -- bounded exception confirmed.
+  vf 0.6: OC 113.5, MMA 113.0, GD 197.5
+
+CONTINUATION (6 seeds): little effect on OC/MMA; GD worsens sharply
+  GD fixed 246.2 -> continuation 364.3 (grayness 0.363 -> 0.645)
+  OC/MMA barely change.
+
+HYPERPARAMETER (6 seeds):
+  GD lr: 0.1->203.6, 4.0->384.1 (strongly sensitive)
+  MMA move: 0.05->169.3, 0.5->171.4 (nearly flat, robust)
+
+MULTIBENCH (6 seeds): ranking holds on all four benchmarks
+  mbb            OC 171.6  MMA 169.7  GD 246.2
+  cantilever     OC 151.0  MMA 152.7  GD 234.8  (MMA marginally > OC here)
+  bridge         OC 24.03  MMA 24.02  GD 33.73
+  tip_cantilever OC 162.3  MMA 160.4  GD 246.1

@@ -1,0 +1,4 @@
+pair,mean_A,mean_B,mannwhitney_p,cliffs_delta
+OC vs GD,171.33,244.34,0.0000,-1.00
+OC vs MMA,171.33,169.36,0.0028,0.56
+GD vs MMA,244.34,169.36,0.0000,1.00

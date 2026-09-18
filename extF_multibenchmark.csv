@@ -1,0 +1,13 @@
+benchmark,optimiser,mean_c,sd_c
+mbb,OC,171.587,0.969
+mbb,GD,246.150,7.560
+mbb,MMA,169.727,1.888
+cantilever,OC,151.026,0.654
+cantilever,GD,234.835,14.287
+cantilever,MMA,152.688,2.323
+bridge,OC,24.026,0.027
+bridge,GD,33.732,0.597
+bridge,MMA,24.019,0.120
+tip_cantilever,OC,162.340,1.469
+tip_cantilever,GD,246.077,6.476
+tip_cantilever,MMA,160.385,1.557

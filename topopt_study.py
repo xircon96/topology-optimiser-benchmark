@@ -44,7 +44,7 @@ CONFIG = {
     "penal": 3.0,
     "rmin": 2.0,
     "maxiter": 160,
-    "seeds": [0, 1, 2, 3],    # raise to 20+ for the final paper
+    "seeds": list(range(20)),    # fuller rerun: 20 seeds
     "optimisers": {
         "OC":  {},
         "GD":  {"lr": 0.5},
@@ -304,7 +304,32 @@ def detect_convergence(compliance, window=10, tol=1e-3):
     return len(c)
 
 
+_RUN_CACHE_DIR = os.environ.get("RUN_CACHE", "run_cache")
+
+def _cache_key(problem, name, maxiter, seed, x0, opt_kwargs):
+    import hashlib, json
+    p = problem
+    spec = dict(nelx=p.nelx, nely=p.nely, volfrac=round(p.volfrac,6),
+                penal=round(p.penal,6), rmin=round(getattr(p,"rmin",0.0),6),
+                bc=getattr(p,"bc",""), name=name, maxiter=maxiter, seed=seed,
+                x0=(x0 if isinstance(x0,str) else "arr"),
+                kw=sorted((opt_kwargs or {}).items()))
+    h = hashlib.md5(json.dumps(spec, sort_keys=True, default=str).encode()).hexdigest()[:16]
+    return f"{name}_{p.nelx}x{p.nely}_vf{p.volfrac}_p{p.penal}_r{round(getattr(p,'rmin',0),3)}_{getattr(p,'bc','')}_s{seed}_m{maxiter}_{h}"
+
 def run_optimisation(problem, name, maxiter=160, seed=0, x0=None, opt_kwargs=None):
+    os.makedirs(_RUN_CACHE_DIR, exist_ok=True)
+    key = _cache_key(problem, name, maxiter, seed, x0, opt_kwargs)
+    f = os.path.join(_RUN_CACHE_DIR, key + ".npz")
+    if os.path.exists(f):
+        d = np.load(f, allow_pickle=True)
+        return {k: (d[k].item() if d[k].ndim==0 else d[k]) for k in d.files}
+    r = _run_optimisation_core(problem, name, maxiter, seed, x0, opt_kwargs)
+    tmp = f + ".tmp.npz"
+    np.savez_compressed(tmp, **r); os.replace(tmp, f)
+    return r
+
+def _run_optimisation_core(problem, name, maxiter=160, seed=0, x0=None, opt_kwargs=None):
     rng = np.random.default_rng(seed)
     n = problem.nelx*problem.nely
     if x0 == "random":
@@ -369,17 +394,27 @@ def hole_count(xPhys, nelx, nely, t=0.5):
 # ============================================================================
 def run_experiment(cfg):
     os.makedirs(cfg["outdir"], exist_ok=True)
+    ckdir = os.path.join(cfg["outdir"], "_ckpt")
+    os.makedirs(ckdir, exist_ok=True)
     prob = TopOptProblem(cfg["nelx"], cfg["nely"], cfg["volfrac"],
                          penal=cfg["penal"], rmin=cfg["rmin"], bc=cfg["benchmark"])
     results = []
     for name, kw in cfg["optimisers"].items():
         for seed in cfg["seeds"]:
+            ckf = os.path.join(ckdir, f"{name}_seed{seed}.npz")
+            if os.path.exists(ckf):
+                d = np.load(ckf, allow_pickle=True)
+                r = {k: (d[k].item() if d[k].ndim==0 else d[k]) for k in d.files}
+                results.append(r)
+                print(f"{name:4s} seed {seed}: cached c={r['compliance']:8.3f}")
+                continue
             r = run_optimisation(prob, name, maxiter=cfg["maxiter"],
                                  seed=seed, x0="random", opt_kwargs=kw)
             results.append(r)
+            np.savez_compressed(ckf, **r)
             print(f"{name:4s} seed {seed}: c={r['compliance']:8.3f} "
                   f"conv@{r['converged_at']:3d} gray={r['grayness']:.3f} "
-                  f"vol={r['final_volume']:.3f}")
+                  f"vol={r['final_volume']:.3f}", flush=True)
     return prob, results
 
 
